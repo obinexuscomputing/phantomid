@@ -411,14 +411,14 @@ void phantom_tree_print(const PhantomDaemon* phantom) {
 
 
 // Initialize PhantomID daemon
-void phantom_init(PhantomDaemon* phantom, uint16_t port, bool enable_history) {
-    if (!phantom) return;
+bool phantom_init(PhantomDaemon* phantom, uint16_t port, bool enable_history) {
+    if (!phantom) return false;
 
     memset(phantom, 0, sizeof(PhantomDaemon));  // Clear all fields
     phantom->max_admins = 5;  // Default value
 
     // Initialize history
-    phantom_history_init(&phantom->history, enable_history);
+    phantom_history_init(phantom->history, enable_history);
     pthread_mutex_init(&phantom->state_lock, NULL);
     
     if (!phantom_tree_init(phantom)) {
@@ -484,7 +484,7 @@ void phantom_cleanup(PhantomDaemon* phantom) {
 // Network callbacks implementation
 // Simplified command handling and updated msg API
 void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
-    char* data = (char*)packet->data;
+     char* data = (char*)packet->data;
     data[packet->size] = '\0';
 
     char response[MAX_MESSAGE_SIZE] = {0};
@@ -537,6 +537,24 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
                      "\nFailed to create account: %s\n",
                      phantom_get_error());
         }
+    } 
+
+    
+    if (strncmp(data, "list bfs", 8) == 0) {
+        phantom_tree_bfs(endpoint->phantom, TreeVisitor, response);
+    } else {
+        phantom_tree_dfs(endpoint->phantom, TreeVisitor, response);
+    }
+
+    // Append history to the response if enabled
+    if (endpoint->phantom->history->enabled) {
+        strcat(response, "\nUser History:\n");
+        pthread_mutex_lock(&endpoint->phantom->history->lock);
+        for (size_t i = 0; i < endpoint->phantom->history->size; i++) {
+            strcat(response, endpoint->phantom->history->entries[i]);
+            strcat(response, "\n");
+        }
+        pthread_mutex_unlock(&endpoint->phantom->history->lock);
     }
 
     // Handle orphaned accounts in list BFS/DFS
@@ -659,6 +677,7 @@ PhantomMessage* phantom_message_get(PhantomDaemon* phantom, const char* id,
         return NULL;
     }
     
+    // TODO:Add Queued message
     // In a real implementation, you'd retrieve queued messages
     // For now, return nothing
     *count = 0;

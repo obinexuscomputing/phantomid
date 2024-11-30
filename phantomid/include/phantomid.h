@@ -75,7 +75,7 @@ typedef struct PhantomDaemon {
     PhantomTree* tree;
     pthread_mutex_t state_lock;
     bool running;
-    PhantomHistory history;
+    PhantomHistory* history;
 } PhantomDaemon;
 
 // Tree traversal callback type
@@ -84,8 +84,7 @@ typedef void (*TreeVisitor)(PhantomNode* node, void* user_data);
 // Core functions
 bool phantom_tree_init(PhantomDaemon* phantom);
 void phantom_tree_cleanup(PhantomDaemon* phantom);
-bool phantom_init(PhantomDaemon* phantom, uint16_t port);
-void phantom_cleanup(PhantomDaemon* phantom);
+bool phantom_init(PhantomDaemon* phantom, uint16_t port, bool enable_history);void phantom_cleanup(PhantomDaemon* phantom);
 void phantom_run(PhantomDaemon* phantom);
 
 // Tree operations
