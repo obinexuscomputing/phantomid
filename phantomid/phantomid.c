@@ -133,12 +133,7 @@ void phantom_tree_cleanup(PhantomDaemon* phantom) {
     phantom->tree = NULL;
 }
 
-void tree_visitor(PhantomNode* node, void* user_data) {
-    char* buffer = (char*)user_data;
-    snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
-             "- ID: %s | Role: %s\n", node->account.id,
-             node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
-}
+
 // Find node by ID
 PhantomNode* phantom_tree_find(PhantomDaemon* phantom, const char* id) {
     if (!phantom || !phantom->tree || !id) return NULL;
@@ -308,7 +303,7 @@ bool phantom_tree_delete(PhantomDaemon* phantom, const char* id) {
 }
 
 // BFS traversal
-void phantom_tree_bfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data) {
+void phantom_tree_bfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data) {
     if (!phantom || !phantom->tree || !visitor) return;
     
     NodeQueue queue;
@@ -340,7 +335,7 @@ void phantom_tree_bfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_d
 }
 
 // DFS traversal helper
-static void dfs_helper(PhantomNode* node, tree_visitor visitor, void* user_data) {
+static void dfs_helper(PhantomNode* node, TreeVisitor visitor, void* user_data) {
     if (!node) return;
     
     pthread_mutex_lock(&node->node_lock);
@@ -355,7 +350,7 @@ static void dfs_helper(PhantomNode* node, tree_visitor visitor, void* user_data)
 }
 
 // DFS traversal
-void phantom_tree_dfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data) {
+void phantom_tree_dfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data) {
     if (!phantom || !phantom->tree || !visitor) return;
     
     pthread_mutex_lock(&phantom->tree->tree_lock);
@@ -366,6 +361,16 @@ void phantom_tree_dfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_d
     
     pthread_mutex_unlock(&phantom->tree->tree_lock);
 }
+
+
+// Tree visitors
+void tree_visitor(PhantomNode* node, void* user_data) {
+    char* buffer = (char*)user_data;
+    snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
+             "- ID: %s | Role: %s\n", node->account.id,
+             node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
+}
+
 
 // Tree status functions
 bool phantom_tree_has_root(const PhantomDaemon* phantom) {

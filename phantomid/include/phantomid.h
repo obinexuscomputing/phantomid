@@ -79,7 +79,7 @@ typedef struct PhantomDaemon {
 } PhantomDaemon;
 
 // Tree traversal callback type
-typedef void (*tree_visitor)(PhantomNode* node, void* user_data);
+typedef void (*TreeVisitor)(PhantomNode* node, void* user_data);
 
 // Core functions
 bool phantom_tree_init(PhantomDaemon* phantom);
@@ -94,8 +94,8 @@ bool phantom_tree_delete(PhantomDaemon* phantom, const char* id);
 PhantomNode* phantom_tree_find(PhantomDaemon* phantom, const char* id);
 
 // Tree traversal
-void phantom_tree_bfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data);
-void phantom_tree_dfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data);
+void phantom_tree_bfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data);
+void phantom_tree_dfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data);
 void phantom_tree_print(const PhantomDaemon* phantom);
 
 // Status queries
