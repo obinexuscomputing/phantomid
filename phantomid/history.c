@@ -4,13 +4,6 @@
 #include <pthread.h>
 #include "history.h"
 
-struct PhantomHistory {
-    char** entries;
-    size_t size;
-    size_t capacity;
-    pthread_mutex_t lock;
-    bool enabled;  // Flag to enable/disable history
-};
 
 void phantom_history_init(PhantomHistory* history, bool enable) {
     history->enabled = enable;
