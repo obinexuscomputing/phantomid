@@ -483,7 +483,7 @@ void phantom_cleanup(PhantomDaemon* phantom) {
 
 // Network callbacks implementation
 void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
-     char* data = (char*)packet->data;
+    char* data = (char*)packet->data;
     data[packet->size] = '\0';
 
     char response[MAX_MESSAGE_SIZE] = {0};
@@ -492,31 +492,6 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
         .size = sizeof(response),
         .flags = 0
     };
-
-    
-    // Define the visitor function
-       void tree_visitor(PhantomNode* node, void* user_data) {
-        char* buffer = (char*)user_data;
-        snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
-                 "- ID: %s | Role: %s\n", node->account.id,
-                 node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
-    }
-
-    if (strncmp(data, "list bfs", 8) == 0) {
-        phantom_tree_bfs(endpoint->phantom, tree_visitor, response);
-    } else {
-        phantom_tree_dfs(endpoint->phantom, tree_visitor, response);
-    }
-
-    if (endpoint->phantom->history->enabled) {
-        pthread_mutex_lock(&endpoint->phantom->history->lock);
-        for (size_t i = 0; i < endpoint->phantom->history->size; i++) {
-            strcat(response, endpoint->phantom->history->entries[i]);
-            strcat(response, "\n");
-        }
-        pthread_mutex_unlock(&endpoint->phantom->history->lock);
-    }
-
 
     // Simplified message command
     if (strncmp(data, "msg", 3) == 0) {
@@ -534,7 +509,6 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
                      "\nInvalid message format. Use: msg <from_id> <to_id> <message>\n");
         }
     }
-
     // Implement create command with max_admins restriction
     else if (strncmp(data, "create", 6) == 0) {
         char parent_id[65] = {0};
@@ -561,13 +535,13 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
                      "\nFailed to create account: %s\n",
                      phantom_get_error());
         }
-    } 
+    }
 
-
+    // List commands
     if (strncmp(data, "list bfs", 8) == 0) {
-        phantom_tree_bfs(endpoint->phantom, TreeVisitor, response);
-    } else {
-        phantom_tree_dfs(endpoint->phantom, TreeVisitor, response);
+        phantom_tree_bfs(endpoint->phantom, tree_visitor, response);
+    } else if (strncmp(data, "list dfs", 8) == 0) {
+        phantom_tree_dfs(endpoint->phantom, tree_visitor, response);
     }
 
     // Append history to the response if enabled
@@ -580,40 +554,6 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
         }
         pthread_mutex_unlock(&endpoint->phantom->history->lock);
     }
-
-    // Handle orphaned accounts in list BFS/DFS
-    else if (strncmp(data, "list bfs", 8) == 0 || strncmp(data, "list dfs", 8) == 0) {
-    snprintf(response, sizeof(response), "\nTree Structure (%s):\n",
-             strncmp(data, "list bfs", 8) == 0 ? "BFS" : "DFS");
-
-
-
-// Use the function pointer
-if (strncmp(data, "list bfs", 8) == 0) {
-    phantom_tree_bfs(endpoint->phantom, tree_visitor, response);
-} else {
-    phantom_tree_dfs(endpoint->phantom, tree_visitor, response);
-}
-
-
-
-    if (strncmp(data, "list bfs", 8) == 0) {
-        phantom_tree_bfs(endpoint->phantom, visitor, response);
-    } else {
-        phantom_tree_dfs(endpoint->phantom, visitor, response);
-    }
-
-    // Append history to the response if enabled
-    if (endpoint->phantom->history.enabled) {
-        strcat(response, "\nUser History:\n");
-        pthread_mutex_lock(&endpoint->phantom->history.lock);
-        for (size_t i = 0; i < endpoint->phantom->history.size; i++) {
-            strcat(response, endpoint->phantom->history.entries[i]);
-            strcat(response, "\n");
-        }
-        pthread_mutex_unlock(&endpoint->phantom->history.lock);
-    }
-}
 
     // Send response back to client
     if (resp.size == 0) {
