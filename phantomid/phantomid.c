@@ -227,6 +227,12 @@ PhantomNode* phantom_tree_insert(PhantomDaemon* phantom, const PhantomAccount* a
     
     return node;
 }
+void tree_visitor(PhantomNode* node, void* user_data) {
+    char* buffer = (char*)user_data;
+    snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
+             "- ID: %s | Role: %s\n", node->account.id,
+             node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
+}
 
 // Delete node from tree
 bool phantom_tree_delete(PhantomDaemon* phantom, const char* id) {
@@ -539,7 +545,7 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
     }
 
     // List commands
-   if (strncmp(data, "list bfs", 8) == 0) {
+    if (strncmp(data, "list bfs", 8) == 0) {
         phantom_tree_bfs(endpoint->phantom, tree_visitor, response);
     } else if (strncmp(data, "list dfs", 8) == 0) {
         phantom_tree_dfs(endpoint->phantom, tree_visitor, response);

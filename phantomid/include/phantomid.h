@@ -79,7 +79,7 @@ typedef struct PhantomDaemon {
 } PhantomDaemon;
 
 // Tree traversal callback type
-typedef void (*TreeVisitor)(PhantomNode* node, void* user_data);
+typedef void (*tree_visitor)(PhantomNode* node, void* user_data);
 
 // Core functions
 bool phantom_tree_init(PhantomDaemon* phantom);
