@@ -5,9 +5,33 @@
 #include <unistd.h>
 #include <errno.h>
 #include "phantomid.h"
+#include <stdbool.h>
 
 static PhantomDaemon phantom_daemon;
 static volatile bool running = true;
+static size_t max_admins = 5;  // Default value
+static bool enable_history = false;
+
+void parse_args(int argc, char* argv[]) {
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--max-admins") == 0) {
+            if (i + 1 < argc) {
+                max_admins = atoi(argv[++i]);
+                if (max_admins < 1) {
+                    fprintf(stderr, "Invalid value for --max-admins. Must be > 0.\n");
+                    exit(1);
+                }
+            } else {
+                fprintf(stderr, "No value provided for --max-admins.\n");
+                exit(1);
+            }
+        } else if (strcmp(argv[i], "--enable-history") == 0) {
+            enable_history = true;
+        }
+    }
+    printf("Max Admins: %zu, History Enabled: %s\n", max_admins, enable_history ? "Yes" : "No");
+}
+
 
 // Signal handler for graceful shutdown
 void handle_signal(int sig) {

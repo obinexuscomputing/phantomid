@@ -68,6 +68,8 @@ void phantom_on_client_disconnect(NetworkEndpoint* endpoint);
 
 // PhantomID daemon state
 typedef struct PhantomDaemon {
+    size_t max_admins;
+    size_t current_admin_count;
     NetworkProgram network;
     PhantomTree* tree;
     pthread_mutex_t state_lock;

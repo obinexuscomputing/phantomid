@@ -479,12 +479,11 @@ void phantom_cleanup(PhantomDaemon* phantom) {
 
 
 // Network callbacks implementation
+// Simplified command handling and updated msg API
 void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
     char* data = (char*)packet->data;
     data[packet->size] = '\0';
-    
-    printf("Received command: %s", data);
-    
+
     char response[MAX_MESSAGE_SIZE] = {0};
     NetworkPacket resp = {
         .data = response,
@@ -492,157 +491,90 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
         .flags = 0
     };
 
-    // Parse command
-    if (strncmp(data, "create", 6) == 0) {
-        char parent_id[65] = {0};
-        if (sscanf(data + 6, "%64s", parent_id) == 1) {
-            PhantomAccount account = {0};
-            generate_seed(account.seed);
-            generate_id(account.seed, account.id);
-            account.creation_time = time(NULL);
-            account.expiry_time = account.creation_time + (90 * 24 * 60 * 60);
-            
-            PhantomNode* node = phantom_tree_insert(endpoint->phantom, &account, parent_id);
-            if (node) {
-                snprintf(response, sizeof(response),
-                        "\nAccount created:\nID: %s\nParent: %s\nRoot: %s\nAdmin: %s\n",
-                        account.id, parent_id,
-                        node->is_root ? "Yes" : "No",
-                        node->is_admin ? "Yes" : "No");
-            } else {
-                snprintf(response, sizeof(response),
-                        "\nFailed to create account: %s\n",
-                        phantom_get_error());
-            }
-        } else {
-            PhantomAccount account = {0};
-            generate_seed(account.seed);
-            generate_id(account.seed, account.id);
-            account.creation_time = time(NULL);
-            account.expiry_time = account.creation_time + (90 * 24 * 60 * 60);
-            
-            PhantomNode* node = phantom_tree_insert(endpoint->phantom, &account, NULL);
-            if (node) {
-                snprintf(response, sizeof(response),
-                        "\nRoot account created:\nID: %s\n",
-                        account.id);
-            } else {
-                snprintf(response, sizeof(response),
-                        "\nFailed to create root account: %s\n",
-                        phantom_get_error());
-            }
-        }
-    }
-    else if (strncmp(data, "delete", 6) == 0) {
-        char id[65] = {0};
-        if (sscanf(data + 6, "%64s", id) == 1) {
-            if (phantom_tree_delete(endpoint->phantom, id)) {
-                snprintf(response, sizeof(response),
-                        "\nAccount deleted: %s\n", id);
-            } else {
-                snprintf(response, sizeof(response),
-                        "\nFailed to delete account: %s\n",
-                        phantom_get_error());
-            }
-        } else {
-            snprintf(response, sizeof(response),
-                    "\nInvalid delete command. Use: delete <id>\n");
-        }
-    }
-    else if (strncmp(data, "msg", 3) == 0) {
-        char from_id[65] = {0}, to_id[65] = {0}, message[MAX_MESSAGE_SIZE] = {0};
-        if (sscanf(data, "msg %64s %64s <%[^>]>", from_id, to_id, message) == 3) {
+    // Simplified message command
+    if (strncmp(data, "msg", 3) == 0) {
+        char from_id[65], to_id[65], message[MAX_MESSAGE_SIZE];
+        if (sscanf(data + 4, "%64s %64s <%[^>]>", from_id, to_id, message) == 3) {
             if (phantom_message_send(endpoint->phantom, from_id, to_id, message)) {
                 snprintf(response, sizeof(response),
-                        "\nMessage sent successfully from %s to %s\n", from_id, to_id);
+                         "\nMessage sent successfully from %s to %s\n", from_id, to_id);
             } else {
                 snprintf(response, sizeof(response),
-                        "\nFailed to send message: %s\n",
-                        phantom_get_error());
+                         "\nFailed to send message: %s\n", phantom_get_error());
             }
         } else {
             snprintf(response, sizeof(response),
-                    "\nInvalid message format. Use: msg <from_id> <to_id> <message>\n");
+                     "\nInvalid message format. Use: msg <from_id> <to_id> <message>\n");
         }
     }
-    else if (strncmp(data, "list", 4) == 0) {
-        if (strncmp(data + 4, " bfs", 4) == 0) {
-            snprintf(response, sizeof(response), "\nTree Structure (BFS):\n");
-            struct PrintContext {
-                char* buffer;
-                size_t offset;
-                size_t max_size;
-            } print_ctx = {response, strlen(response), sizeof(response)};
-            
-            phantom_tree_bfs(endpoint->phantom, print_node, &print_ctx);
-            resp.size = print_ctx.offset;
+
+    // Implement create command with max_admins restriction
+    else if (strncmp(data, "create", 6) == 0) {
+        char parent_id[65] = {0};
+        bool is_root = false;
+        PhantomAccount account = {0};
+        generate_seed(account.seed);
+        generate_id(account.seed, account.id);
+        account.creation_time = time(NULL);
+        account.expiry_time = account.creation_time + (90 * 24 * 60 * 60);
+
+        // Check max_admins limit
+        if (endpoint->phantom->current_admin_count < endpoint->phantom->max_admins) {
+            is_root = true;  // Assign admin/root privileges
+            endpoint->phantom->current_admin_count++;
         }
-        else if (strncmp(data + 4, " dfs", 4) == 0) {
-            snprintf(response, sizeof(response), "\nTree Structure (DFS):\n");
-            struct PrintContext {
-                char* buffer;
-                size_t offset;
-                size_t max_size;
-            } print_ctx = {response, strlen(response), sizeof(response)};
-            
-            phantom_tree_dfs(endpoint->phantom, print_node, &print_ctx);
-            resp.size = print_ctx.offset;
-        }
-        else {
-            size_t total = phantom_tree_size(endpoint->phantom);
-            size_t depth = phantom_tree_depth(endpoint->phantom);
-            bool has_root = phantom_tree_has_root(endpoint->phantom);
-            
+
+        PhantomNode* node = phantom_tree_insert(endpoint->phantom, &account, is_root ? NULL : parent_id);
+        if (node) {
             snprintf(response, sizeof(response),
-                    "\nTree Summary:\n"
-                    "Total Nodes: %zu\n"
-                    "Tree Depth: %zu\n"
-                    "Root Node: %s\n\n",
-                    total, depth,
-                    has_root ? "Present" : "Not Present");
-            
-            struct PrintContext {
-                char* buffer;
-                size_t offset;
-                size_t max_size;
-            } print_ctx = {response, strlen(response), sizeof(response)};
-            
-            phantom_tree_print(endpoint->phantom);
-            resp.size = print_ctx.offset;
+                     "\nAccount created:\nID: %s\nRole: %s\n",
+                     account.id, is_root ? "Admin" : "Child");
+        } else {
+            snprintf(response, sizeof(response),
+                     "\nFailed to create account: %s\n",
+                     phantom_get_error());
         }
     }
-    else if (strncmp(data, "help", 4) == 0) {
-        snprintf(response, sizeof(response),
-                "\nPhantomID Commands:\n"
-                "----------------\n"
-                "create [parent_id]     Create new account (optionally under parent)\n"
-                "delete <id>           Delete account\n"
-                "msg <from> <to> <msg> Send message between accounts\n"
-                "list                  Show tree summary and structure\n"
-                "list bfs              Show tree using breadth-first traversal\n"
-                "list dfs              Show tree using depth-first traversal\n"
-                "help                  Show this help message\n"
-                "quit                  Disconnect from server\n\n"
-                "Message format: msg <from_id> <to_id> <message in brackets>\n"
-                "Example: msg abc123 def456 <Hello World!>\n");
+
+    // Handle orphaned accounts in list BFS/DFS
+    else if (strncmp(data, "list bfs", 8) == 0 || strncmp(data, "list dfs", 8) == 0) {
+    snprintf(response, sizeof(response), "\nTree Structure (%s):\n",
+             strncmp(data, "list bfs", 8) == 0 ? "BFS" : "DFS");
+
+    TreeVisitor visitor = [](PhantomNode* node, void* user_data) {
+        char* buffer = (char*)user_data;
+        snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
+                 "- ID: %s | Role: %s\n", node->account.id,
+                 node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
+    };
+
+    if (strncmp(data, "list bfs", 8) == 0) {
+        phantom_tree_bfs(endpoint->phantom, visitor, response);
+    } else {
+        phantom_tree_dfs(endpoint->phantom, visitor, response);
     }
-    else if (strncmp(data, "quit", 4) == 0) {
-        snprintf(response, sizeof(response), "\nDisconnecting...\n");
+
+    // Append history to the response if enabled
+    if (endpoint->phantom->history.enabled) {
+        strcat(response, "\nUser History:\n");
+        pthread_mutex_lock(&endpoint->phantom->history.lock);
+        for (size_t i = 0; i < endpoint->phantom->history.size; i++) {
+            strcat(response, endpoint->phantom->history.entries[i]);
+            strcat(response, "\n");
+        }
+        pthread_mutex_unlock(&endpoint->phantom->history.lock);
     }
-    else {
-        snprintf(response, sizeof(response),
-                "\nUnknown command. Type 'help' for available commands.\n");
-    }
-    
-    // Set response size if not already set by specific commands
+}
+
+    // Send response back to client
     if (resp.size == 0) {
         resp.size = strlen(response);
     }
-
     if (net_send(endpoint, &resp) < 0) {
         printf("Failed to send response to client\n");
     }
 }
+
 // Network callbacks with proper usage of parameters
 void phantom_on_client_connect(NetworkEndpoint* endpoint) {
     char addr[INET_ADDRSTRLEN];
