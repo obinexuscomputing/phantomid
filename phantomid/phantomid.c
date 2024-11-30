@@ -539,9 +539,9 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
 
     // List commands
     if (strncmp(data, "list bfs", 8) == 0) {
-        phantom_tree_bfs(endpoint->phantom, tree_visitor, response);
+        phantom_tree_bfs(endpoint->phantom, TreeVisitor, response);
     } else if (strncmp(data, "list dfs", 8) == 0) {
-        phantom_tree_dfs(endpoint->phantom, tree_visitor, response);
+        phantom_tree_dfs(endpoint->phantom, TreeVisitor, response);
     }
 
     // Append history to the response if enabled
