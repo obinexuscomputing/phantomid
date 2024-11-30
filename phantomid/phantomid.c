@@ -493,6 +493,7 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
         .flags = 0
     };
 
+
     // Simplified message command
     if (strncmp(data, "msg", 3) == 0) {
         char from_id[65], to_id[65], message[MAX_MESSAGE_SIZE];
@@ -538,12 +539,11 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
     }
 
     // List commands
-    if (strncmp(data, "list bfs", 8) == 0) {
-        phantom_tree_bfs(endpoint->phantom, TreeVisitor, response);
+   if (strncmp(data, "list bfs", 8) == 0) {
+        phantom_tree_bfs(endpoint->phantom, tree_visitor, response);
     } else if (strncmp(data, "list dfs", 8) == 0) {
-        phantom_tree_dfs(endpoint->phantom, TreeVisitor, response);
+        phantom_tree_dfs(endpoint->phantom, tree_visitor, response);
     }
-
     // Append history to the response if enabled
     if (endpoint->phantom->history->enabled) {
         strcat(response, "\nUser History:\n");
@@ -555,7 +555,7 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
         pthread_mutex_unlock(&endpoint->phantom->history->lock);
     }
 
-    // Send response back to client
+     // Send response back to client
     if (resp.size == 0) {
         resp.size = strlen(response);
     }
