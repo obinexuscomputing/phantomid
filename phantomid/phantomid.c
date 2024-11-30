@@ -307,7 +307,7 @@ bool phantom_tree_delete(PhantomDaemon* phantom, const char* id) {
 }
 
 // BFS traversal
-void phantom_tree_bfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data) {
+void phantom_tree_bfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data) {
     if (!phantom || !phantom->tree || !visitor) return;
     
     NodeQueue queue;
@@ -339,7 +339,7 @@ void phantom_tree_bfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_da
 }
 
 // DFS traversal helper
-static void dfs_helper(PhantomNode* node, TreeVisitor visitor, void* user_data) {
+static void dfs_helper(PhantomNode* node, tree_visitor visitor, void* user_data) {
     if (!node) return;
     
     pthread_mutex_lock(&node->node_lock);
@@ -354,7 +354,7 @@ static void dfs_helper(PhantomNode* node, TreeVisitor visitor, void* user_data) 
 }
 
 // DFS traversal
-void phantom_tree_dfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data) {
+void phantom_tree_dfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data) {
     if (!phantom || !phantom->tree || !visitor) return;
     
     pthread_mutex_lock(&phantom->tree->tree_lock);
