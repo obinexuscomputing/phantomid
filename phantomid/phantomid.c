@@ -495,7 +495,7 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
 
     
     // Define the visitor function
-    void tree_visitor(PhantomNode* node, void* user_data) {
+       void tree_visitor(PhantomNode* node, void* user_data) {
         char* buffer = (char*)user_data;
         snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
                  "- ID: %s | Role: %s\n", node->account.id,
@@ -516,6 +516,7 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
         }
         pthread_mutex_unlock(&endpoint->phantom->history->lock);
     }
+
 
     // Simplified message command
     if (strncmp(data, "msg", 3) == 0) {
