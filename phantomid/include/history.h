@@ -1,5 +1,5 @@
-#ifndef PHANTOM_HISTORY_H
-#define PHANTOM_HISTORY_H
+#ifndef HISTORY_H
+#define HISTORY_H
 
 #include <stdbool.h>  
 #include <pthread.h>
@@ -18,4 +18,4 @@ void phantom_notify_users(const char* message);
 void phantom_user_enter(PhantomHistory* history, const char* user_id);
 void phantom_user_exit(PhantomHistory* history, const char* user_id);
 
-#endif // PHANTOM_HISTORY_H
+#endif // HISTORY_H

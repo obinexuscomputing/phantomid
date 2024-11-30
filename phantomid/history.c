@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-
+#include "history.h"
 typedef struct PhantomHistory {
     char** entries;
     size_t size;

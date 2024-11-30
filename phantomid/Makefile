@@ -10,7 +10,7 @@ TARGET_LIB = libphantomid.so
 TARGET_STATIC = libphantomid.a
 TARGET_EXEC = phantomid
 
-SRC_FILES = main.c network.c phantom_history.c phantomid.c
+SRC_FILES = main.c network.c history.c phantomid.c
 OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
 all: $(TARGET_LIB) $(TARGET_STATIC) $(TARGET_EXEC)
