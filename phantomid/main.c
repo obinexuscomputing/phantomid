@@ -119,12 +119,29 @@ int main(int argc, char* argv[]) {
         else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
             debug = true;
         }
+        else if (strcmp(argv[i], "--max-admins") == 0) {
+            if (i + 1 < argc) {
+                max_admins = atoi(argv[++i]);
+                if (max_admins < 1) {
+                    fprintf(stderr, "Invalid value for --max-admins. Must be > 0.\n");
+                    return 1;
+                }
+            } else {
+                fprintf(stderr, "No value provided for --max-admins.\n");
+                return 1;
+            }
+        }
+        else if (strcmp(argv[i], "--enable-history") == 0) {
+            enable_history = true;
+        }
         else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             print_usage(argv[0]);
             return 1;
         }
     }
+    
+    printf("Max Admins: %zu, History Enabled: %s\n", max_admins, enable_history ? "Yes" : "No");
     
     // Setup signal handlers
     setup_signals();
