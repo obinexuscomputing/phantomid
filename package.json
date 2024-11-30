@@ -1,0 +1,13 @@
+{
+  "name": "@obinexuscomputing/phantomid",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "gypfile": true,
+  "scripts": {
+    "build": "node-gyp rebuild"
+  },
+  "dependencies": {
+    "node-addon-api": "^5.0.0"
+  }
+}
