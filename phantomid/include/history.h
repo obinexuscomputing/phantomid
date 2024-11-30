@@ -4,7 +4,13 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-typedef struct PhantomHistory PhantomHistory;
+typedef struct PhantomHistory {
+    char** entries;
+    size_t size;
+    size_t capacity;
+    pthread_mutex_t lock;
+    bool enabled;  // Flag to enable/disable history
+} PhantomHistory;
 
 void phantom_history_init(PhantomHistory* history, bool enable);
 void phantom_history_add(PhantomHistory* history, const char* entry);

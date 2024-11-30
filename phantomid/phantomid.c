@@ -482,7 +482,6 @@ void phantom_cleanup(PhantomDaemon* phantom) {
 
 
 // Network callbacks implementation
-// Simplified command handling and updated msg API
 void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
      char* data = (char*)packet->data;
     data[packet->size] = '\0';
@@ -496,7 +495,7 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
 
     
     // Define the visitor function
-       void tree_visitor(PhantomNode* node, void* user_data) {
+    void tree_visitor(PhantomNode* node, void* user_data) {
         char* buffer = (char*)user_data;
         snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
                  "- ID: %s | Role: %s\n", node->account.id,
