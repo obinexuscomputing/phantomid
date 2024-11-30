@@ -94,8 +94,8 @@ bool phantom_tree_delete(PhantomDaemon* phantom, const char* id);
 PhantomNode* phantom_tree_find(PhantomDaemon* phantom, const char* id);
 
 // Tree traversal
-void phantom_tree_bfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data);
-void phantom_tree_dfs(PhantomDaemon* phantom, TreeVisitor visitor, void* user_data);
+void phantom_tree_bfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data);
+void phantom_tree_dfs(PhantomDaemon* phantom, tree_visitor visitor, void* user_data);
 void phantom_tree_print(const PhantomDaemon* phantom);
 
 // Status queries
