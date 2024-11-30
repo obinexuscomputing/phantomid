@@ -1,7 +1,6 @@
 
 #include "phantomid.h"
 #include "network.h"
-
 #define QUEUE_SIZE 1000
 
 // Static globals
@@ -412,10 +411,14 @@ void phantom_tree_print(const PhantomDaemon* phantom) {
 
 
 // Initialize PhantomID daemon
-bool phantom_init(PhantomDaemon* phantom, uint16_t port) {
-    if (!phantom) return false;
-    
-    memset(phantom, 0, sizeof(PhantomDaemon));
+void phantom_init(PhantomDaemon* phantom, uint16_t port, bool enable_history) {
+    if (!phantom) return;
+
+    memset(phantom, 0, sizeof(PhantomDaemon));  // Clear all fields
+    phantom->max_admins = 5;  // Default value
+
+    // Initialize history
+    phantom_history_init(&phantom->history, enable_history);
     pthread_mutex_init(&phantom->state_lock, NULL);
     
     if (!phantom_tree_init(phantom)) {
@@ -541,12 +544,22 @@ void phantom_on_client_data(NetworkEndpoint* endpoint, NetworkPacket* packet) {
     snprintf(response, sizeof(response), "\nTree Structure (%s):\n",
              strncmp(data, "list bfs", 8) == 0 ? "BFS" : "DFS");
 
-    TreeVisitor visitor = [](PhantomNode* node, void* user_data) {
-        char* buffer = (char*)user_data;
-        snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
-                 "- ID: %s | Role: %s\n", node->account.id,
-                 node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
-    };
+    // Define the visitor function
+void tree_visitor(PhantomNode* node, void* user_data) {
+    char* buffer = (char*)user_data;
+    snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
+             "- ID: %s | Role: %s\n", node->account.id,
+             node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
+}
+
+// Use the function pointer
+if (strncmp(data, "list bfs", 8) == 0) {
+    phantom_tree_bfs(endpoint->phantom, tree_visitor, response);
+} else {
+    phantom_tree_dfs(endpoint->phantom, tree_visitor, response);
+}
+
+
 
     if (strncmp(data, "list bfs", 8) == 0) {
         phantom_tree_bfs(endpoint->phantom, visitor, response);

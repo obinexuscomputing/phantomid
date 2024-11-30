@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <arpa/inet.h>
 #include "network.h"
+#include "history.h"
 
 #define MAX_ACCOUNTS 1000
 #define MAX_MESSAGE_SIZE 4096
@@ -74,6 +75,7 @@ typedef struct PhantomDaemon {
     PhantomTree* tree;
     pthread_mutex_t state_lock;
     bool running;
+    PhantomHistory history;
 } PhantomDaemon;
 
 // Tree traversal callback type
