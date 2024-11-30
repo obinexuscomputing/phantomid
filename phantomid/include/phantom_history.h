@@ -1,7 +1,13 @@
 #ifndef PHANTOM_HISTORY_H
 #define PHANTOM_HISTORY_H
 
-#include <stdbool.h>
+#include <stdbool.h>  
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Rest of the file remains unchanged
 
 typedef struct PhantomHistory PhantomHistory;
 
