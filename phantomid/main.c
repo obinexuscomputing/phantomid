@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
     
     // Initialize PhantomID daemon
     printf("Initializing PhantomID daemon on port %d...\n", port);
-    if (!phantom_init(&phantom_daemon, port)) {
+    if (!phantom_init(&phantom_daemon, port, enable_history)) {
         fprintf(stderr, "Failed to initialize PhantomID daemon: %s\n", 
                 phantom_get_error());
         return 1;
