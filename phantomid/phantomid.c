@@ -133,6 +133,12 @@ void phantom_tree_cleanup(PhantomDaemon* phantom) {
     phantom->tree = NULL;
 }
 
+void tree_visitor(PhantomNode* node, void* user_data) {
+    char* buffer = (char*)user_data;
+    snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
+             "- ID: %s | Role: %s\n", node->account.id,
+             node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
+}
 // Find node by ID
 PhantomNode* phantom_tree_find(PhantomDaemon* phantom, const char* id) {
     if (!phantom || !phantom->tree || !id) return NULL;
@@ -227,12 +233,7 @@ PhantomNode* phantom_tree_insert(PhantomDaemon* phantom, const PhantomAccount* a
     
     return node;
 }
-void tree_visitor(PhantomNode* node, void* user_data) {
-    char* buffer = (char*)user_data;
-    snprintf(buffer + strlen(buffer), MAX_MESSAGE_SIZE - strlen(buffer),
-             "- ID: %s | Role: %s\n", node->account.id,
-             node->is_admin ? "Admin" : (node->is_root ? "Root" : "Child"));
-}
+
 
 // Delete node from tree
 bool phantom_tree_delete(PhantomDaemon* phantom, const char* id) {
