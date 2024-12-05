@@ -4,9 +4,11 @@ RM := del /Q
 
 # OpenSSL configuration for Windows
 OPENSSL_DIR := "C:/Program Files/OpenSSL-Win64"
-OPENSSL_LIB := $(OPENSSL_DIR)/
 OPENSSL_INCLUDE := -I$(OPENSSL_DIR)/include
-OPENSSL_LIBS := -L$(OPENSSL_LIB) -llibssl -llibcrypto
+
+# Library paths and flags
+LIB_DIR := lib
+OPENSSL_LIBS := -L./$(LIB_DIR) -lssl-3-x64 -lcrypto-3-x64
 
 # Windows-specific defines and libraries
 WINDOWS_DEFINES := -D_WIN32 -DWIN32_LEAN_AND_MEAN
@@ -17,20 +19,20 @@ CFLAGS := -Wall -Wextra -O2 $(OPENSSL_INCLUDE) $(WINDOWS_DEFINES)
 LDFLAGS := -pthread
 LIBS := $(OPENSSL_LIBS) $(WINDOWS_LIBS)
 
-# Directories
+# Directory structure
 SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := bin
 
 # Source files
-SRCS := main.c network.c phantomid.c
-OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)
+SRCS := $(wildcard $(SRC_DIR)/*.c)
+OBJS := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # Binary name
 TARGET := $(BIN_DIR)/phantomid.exe
 
 # Header files
-DEPS := network.h phantomid.h
+DEPS := $(wildcard $(SRC_DIR)/*.h)
 
 # Create directories if they don't exist
 $(shell if not exist $(OBJ_DIR) mkdir $(OBJ_DIR))
@@ -38,7 +40,7 @@ $(shell if not exist $(BIN_DIR) mkdir $(BIN_DIR))
 
 # Default target
 .PHONY: all
-all: check_env $(TARGET)
+all: check_env $(TARGET) copy_dlls
 
 # Environment check target
 .PHONY: check_env
@@ -46,16 +48,13 @@ check_env:
 	@echo Checking build environment...
 	@where gcc >nul 2>&1 || (echo GCC not found in PATH && exit 1)
 	@if not exist $(OPENSSL_DIR) (echo OpenSSL directory not found at $(OPENSSL_DIR) && exit 1)
-	@if not exist $(OPENSSL_LIB) (echo OpenSSL libraries not found at $(OPENSSL_LIB) && exit 1)
+	@if not exist $(LIB_DIR) (echo Library directory not found at $(LIB_DIR) && exit 1)
 
 # Link the final binary
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
 	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
 	@echo Build complete.
-	@echo Required DLLs:
-	@echo - $(OPENSSL_DIR)/bin/libssl-3-x64.dll
-	@echo - $(OPENSSL_DIR)/bin/libcrypto-3-x64.dll
 
 # Compile source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
@@ -65,7 +64,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
 # Copy DLLs
 .PHONY: copy_dlls
 copy_dlls: $(TARGET)
-	@echo Copying OpenSSL DLLs...
-	copy "$(OPENSSL_DIR)\bin\libssl-3-x64.dll" "$(BIN_DIR)"
-	copy "$(OPENSSL_DIR)\bin\libcrypto-3-x64.dll" "$(BIN_DIR)"
+	@echo Copying DLLs to bin directory...
+	copy "$(LIB_DIR)\libssl-3-x64.dll" "$(BIN_DIR)"
+	copy "$(LIB_DIR)\libcrypto-3-x64.dll" "$(BIN_DIR)"
 	@echo DLLs copied successfully.
