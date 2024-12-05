@@ -1,6 +1,16 @@
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Wextra -DLINUX -fno-stack-protector
+CFLAGS := -Wall -Wextra -O2 -fno-stack-protector
+
+# System detection and platform-specific flags
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    CFLAGS += -DLINUX
+    LIBS_OS :=
+else
+    CFLAGS += -D_WIN32 -DWIN32_LEAN_AND_MEAN
+    LIBS_OS := -lws2_32
+endif
 
 # Library and include paths
 LIB_DIR := lib
@@ -15,7 +25,9 @@ else
     CFLAGS += -I/usr/include/openssl
     LIBS := -lssl -lcrypto
 endif
-LIBS += -lrt
+
+# Complete libraries list
+LIBS += $(LIBS_OS) -lrt
 
 # Directory structure
 SRC_DIR := src
@@ -43,6 +55,7 @@ all: check_env $(TARGET)
 .PHONY: check_env
 check_env:
 	@echo "Checking build environment..."
+	@echo "Building for $(UNAME_S)"
 	@if [ ! -f /usr/include/openssl/ssl.h ]; then \
 		echo "Error: OpenSSL development files not found"; \
 		echo "Please install libssl-dev (Debian/Ubuntu) or openssl-devel (RHEL/CentOS)"; \
@@ -61,7 +74,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean build files
+# Clean build files and start fresh
 .PHONY: clean
 clean:
 	@echo "Cleaning build files..."
@@ -77,13 +90,3 @@ debug: clean all
 .PHONY: run
 run: $(TARGET)
 	./$(TARGET)
-
-# Add stack note section
-.PHONY: fix_stack
-fix_stack:
-	@echo "Adding GNU stack note..."
-	for obj in $(OBJS); do \
-		if ! readelf -S $$obj | grep -q .note.GNU-stack; then \
-			objcopy --add-gnu-debuglink=.note.GNU-stack $$obj; \
-		fi \
-	done
