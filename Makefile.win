@@ -1,0 +1,71 @@
+# Windows compiler and tools
+CC := gcc
+RM := del /Q
+
+# OpenSSL configuration for Windows
+OPENSSL_DIR := "C:/Program Files/OpenSSL-Win64"
+OPENSSL_LIB := $(OPENSSL_DIR)/lib
+OPENSSL_INCLUDE := -I$(OPENSSL_DIR)/include
+OPENSSL_LIBS := -L$(OPENSSL_LIB) -llibssl -llibcrypto
+
+# Windows-specific defines and libraries
+WINDOWS_DEFINES := -D_WIN32 -DWIN32_LEAN_AND_MEAN
+WINDOWS_LIBS := -lws2_32 -ladvapi32 -lcrypt32 -luser32 -lgdi32
+
+# Compiler flags
+CFLAGS := -Wall -Wextra -O2 $(OPENSSL_INCLUDE) $(WINDOWS_DEFINES)
+LDFLAGS := -pthread
+LIBS := $(OPENSSL_LIBS) $(WINDOWS_LIBS)
+
+# Directories
+SRC_DIR := .
+OBJ_DIR := obj
+BIN_DIR := bin
+
+# Source files
+SRCS := main.c network.c phantomid.c
+OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)
+
+# Binary name
+TARGET := $(BIN_DIR)/phantomid.exe
+
+# Header files
+DEPS := network.h phantomid.h
+
+# Create directories if they don't exist
+$(shell if not exist $(OBJ_DIR) mkdir $(OBJ_DIR))
+$(shell if not exist $(BIN_DIR) mkdir $(BIN_DIR))
+
+# Default target
+.PHONY: all
+all: check_env $(TARGET)
+
+# Environment check target
+.PHONY: check_env
+check_env:
+	@echo Checking build environment...
+	@where gcc >nul 2>&1 || (echo GCC not found in PATH && exit 1)
+	@if not exist $(OPENSSL_DIR) (echo OpenSSL directory not found at $(OPENSSL_DIR) && exit 1)
+	@if not exist $(OPENSSL_LIB) (echo OpenSSL libraries not found at $(OPENSSL_LIB) && exit 1)
+
+# Link the final binary
+$(TARGET): $(OBJS)
+	@echo Linking $(TARGET)...
+	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	@echo Build complete.
+	@echo Required DLLs:
+	@echo - $(OPENSSL_DIR)/bin/libssl-3-x64.dll
+	@echo - $(OPENSSL_DIR)/bin/libcrypto-3-x64.dll
+
+# Compile source files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
+	@echo Compiling $<...
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Copy DLLs
+.PHONY: copy_dlls
+copy_dlls: $(TARGET)
+	@echo Copying OpenSSL DLLs...
+	copy "$(OPENSSL_DIR)\bin\libssl-3-x64.dll" "$(BIN_DIR)"
+	copy "$(OPENSSL_DIR)\bin\libcrypto-3-x64.dll" "$(BIN_DIR)"
+	@echo DLLs copied successfully.
