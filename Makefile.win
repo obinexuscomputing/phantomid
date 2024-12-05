@@ -4,7 +4,7 @@ RM := del /Q
 
 # OpenSSL configuration for Windows
 OPENSSL_DIR := "C:/Program Files/OpenSSL-Win64"
-OPENSSL_LIB := $(OPENSSL_DIR)/lib
+OPENSSL_LIB := $(OPENSSL_DIR)/
 OPENSSL_INCLUDE := -I$(OPENSSL_DIR)/include
 OPENSSL_LIBS := -L$(OPENSSL_LIB) -llibssl -llibcrypto
 
