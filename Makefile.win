@@ -3,10 +3,20 @@ CC := gcc
 RM := del /Q
 MKDIR := mkdir
 
-# OpenSSL configuration for Windows - using shortened path to avoid spaces
+# Project directories
+ROOT_DIR := .
+SRC_DIR := $(ROOT_DIR)/src
+BIN_DIR := $(ROOT_DIR)/bin
+OBJ_DIR := $(ROOT_DIR)/obj
+LIB_DIR := $(ROOT_DIR)/lib
+PROJ_DIR := $(ROOT_DIR)/-p
+
+# OpenSSL configuration for Windows
 OPENSSL_DIR := C:\Progra~1\OpenSSL-Win64
-OPENSSL_INCLUDE := -I"$(OPENSSL_DIR)\include"
-OPENSSL_LIBS := -L"./$(LIB_DIR)" -lssl-3-x64 -lcrypto-3-x64
+OPENSSL_INCLUDE := -I"$(OPENSSL_DIR)/include"
+
+# Library paths and flags
+OPENSSL_LIBS := -L"$(LIB_DIR)" -lssl-3-x64 -lcrypto-3-x64
 
 # Windows-specific defines and libraries
 WINDOWS_DEFINES := -D_WIN32 -DWIN32_LEAN_AND_MEAN
@@ -16,12 +26,6 @@ WINDOWS_LIBS := -lws2_32 -ladvapi32 -lcrypt32 -luser32 -lgdi32
 CFLAGS := -Wall -Wextra -O2 $(OPENSSL_INCLUDE) $(WINDOWS_DEFINES)
 LDFLAGS := -pthread
 LIBS := $(OPENSSL_LIBS) $(WINDOWS_LIBS)
-
-# Directory structure
-SRC_DIR := src
-OBJ_DIR := obj
-BIN_DIR := bin
-PROJ_DIR := -p
 
 # Source files
 SRCS := $(wildcard $(SRC_DIR)/*.c)
@@ -50,7 +54,8 @@ check_env:
 	@echo Checking build environment...
 	@where gcc >nul 2>&1 || ( echo GCC not found in PATH && exit 1 )
 	@if not exist "$(OPENSSL_DIR)\include\openssl\ssl.h" ( echo OpenSSL headers not found in $(OPENSSL_DIR)\include && exit 1 )
-	@if not exist "$(LIB_DIR)" ( echo Library directory not found at $(LIB_DIR) && exit 1 )
+	@if not exist "$(LIB_DIR)\libssl-3-x64.dll" ( echo OpenSSL DLLs not found in $(LIB_DIR) && exit 1 )
+	@if not exist "$(LIB_DIR)\libcrypto-3-x64.dll" ( echo OpenSSL DLLs not found in $(LIB_DIR) && exit 1 )
 	@echo Environment check passed.
 
 # Link the final binary
@@ -85,3 +90,21 @@ clean:
 run: $(TARGET)
 	@echo Running PhantomID...
 	@$(TARGET)
+
+# Help target
+.PHONY: help
+help:
+	@echo PhantomID Build System for Windows
+	@echo -------------------------------
+	@echo Directory Structure:
+	@echo   src/     - Source code files
+	@echo   lib/     - Library files and DLLs
+	@echo   bin/     - Output binaries
+	@echo   obj/     - Object files
+	@echo   -p/      - Project configuration
+	@echo.
+	@echo Available targets:
+	@echo   all        - Build the project
+	@echo   clean      - Remove build files
+	@echo   copy_dlls  - Copy DLLs to bin directory
+	@echo   help       - Show this help message
