@@ -18,7 +18,7 @@ LDFLAGS := -pthread
 LIBS := $(OPENSSL_LIBS) $(WINDOWS_LIBS)
 
 # Directories
-SRC_DIR := .
+SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := bin
 
