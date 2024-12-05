@@ -1,6 +1,6 @@
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Wextra -DLINUX
+CFLAGS := -Wall -Wextra -DLINUX -fno-stack-protector
 
 # Library and include paths
 LIB_DIR := lib
@@ -77,3 +77,13 @@ debug: clean all
 .PHONY: run
 run: $(TARGET)
 	./$(TARGET)
+
+# Add stack note section
+.PHONY: fix_stack
+fix_stack:
+	@echo "Adding GNU stack note..."
+	for obj in $(OBJS); do \
+		if ! readelf -S $$obj | grep -q .note.GNU-stack; then \
+			objcopy --add-gnu-debuglink=.note.GNU-stack $$obj; \
+		fi \
+	done
