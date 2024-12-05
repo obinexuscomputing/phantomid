@@ -3,13 +3,10 @@ CC := gcc
 RM := del /Q
 MKDIR := mkdir
 
-# OpenSSL configuration for Windows
-OPENSSL_DIR := "C:/Program Files/OpenSSL-Win64"
-OPENSSL_INCLUDE := -I$(OPENSSL_DIR)/include
-
-# Library paths and flags
-LIB_DIR := lib
-OPENSSL_LIBS := -L./$(LIB_DIR) -lssl-3-x64 -lcrypto-3-x64
+# OpenSSL configuration for Windows - using shortened path to avoid spaces
+OPENSSL_DIR := C:\Progra~1\OpenSSL-Win64
+OPENSSL_INCLUDE := -I"$(OPENSSL_DIR)\include"
+OPENSSL_LIBS := -L"./$(LIB_DIR)" -lssl-3-x64 -lcrypto-3-x64
 
 # Windows-specific defines and libraries
 WINDOWS_DEFINES := -D_WIN32 -DWIN32_LEAN_AND_MEAN
@@ -45,14 +42,14 @@ create_dirs:
 
 # Default target
 .PHONY: all
-all: check_env create_dirs $(TARGET) copy_dlls
+all: check_env create_dirs $(TARGET)
 
 # Environment check target
 .PHONY: check_env
 check_env:
 	@echo Checking build environment...
 	@where gcc >nul 2>&1 || ( echo GCC not found in PATH && exit 1 )
-	@if not exist "$(OPENSSL_DIR)" ( echo OpenSSL directory not found at $(OPENSSL_DIR) && exit 1 )
+	@if not exist "$(OPENSSL_DIR)\include\openssl\ssl.h" ( echo OpenSSL headers not found in $(OPENSSL_DIR)\include && exit 1 )
 	@if not exist "$(LIB_DIR)" ( echo Library directory not found at $(LIB_DIR) && exit 1 )
 	@echo Environment check passed.
 
