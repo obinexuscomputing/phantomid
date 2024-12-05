@@ -1,6 +1,7 @@
 # Windows compiler and tools
 CC := gcc
 RM := del /Q
+MKDIR := mkdir
 
 # OpenSSL configuration for Windows
 OPENSSL_DIR := "C:/Program Files/OpenSSL-Win64"
@@ -23,6 +24,7 @@ LIBS := $(OPENSSL_LIBS) $(WINDOWS_LIBS)
 SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := bin
+PROJ_DIR := -p
 
 # Source files
 SRCS := $(wildcard $(SRC_DIR)/*.c)
@@ -34,37 +36,55 @@ TARGET := $(BIN_DIR)/phantomid.exe
 # Header files
 DEPS := $(wildcard $(SRC_DIR)/*.h)
 
-# Create directories if they don't exist
-$(shell if not exist $(OBJ_DIR) mkdir $(OBJ_DIR))
-$(shell if not exist $(BIN_DIR) mkdir $(BIN_DIR))
+# Create build directories safely
+.PHONY: create_dirs
+create_dirs:
+	@if not exist "$(BIN_DIR)" ( $(MKDIR) "$(BIN_DIR)" )
+	@if not exist "$(OBJ_DIR)" ( $(MKDIR) "$(OBJ_DIR)" )
+	@if not exist "$(PROJ_DIR)" ( $(MKDIR) "$(PROJ_DIR)" )
 
 # Default target
 .PHONY: all
-all: check_env $(TARGET) copy_dlls
+all: check_env create_dirs $(TARGET) copy_dlls
 
 # Environment check target
 .PHONY: check_env
 check_env:
 	@echo Checking build environment...
-	@where gcc >nul 2>&1 || (echo GCC not found in PATH && exit 1)
-	@if not exist $(OPENSSL_DIR) (echo OpenSSL directory not found at $(OPENSSL_DIR) && exit 1)
-	@if not exist $(LIB_DIR) (echo Library directory not found at $(LIB_DIR) && exit 1)
+	@where gcc >nul 2>&1 || ( echo GCC not found in PATH && exit 1 )
+	@if not exist "$(OPENSSL_DIR)" ( echo OpenSSL directory not found at $(OPENSSL_DIR) && exit 1 )
+	@if not exist "$(LIB_DIR)" ( echo Library directory not found at $(LIB_DIR) && exit 1 )
+	@echo Environment check passed.
 
 # Link the final binary
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
-	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	@$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
 	@echo Build complete.
 
 # Compile source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
 	@echo Compiling $<...
-	$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # Copy DLLs
 .PHONY: copy_dlls
 copy_dlls: $(TARGET)
 	@echo Copying DLLs to bin directory...
-	copy "$(LIB_DIR)\libssl-3-x64.dll" "$(BIN_DIR)"
-	copy "$(LIB_DIR)\libcrypto-3-x64.dll" "$(BIN_DIR)"
+	@copy /Y "$(LIB_DIR)\libssl-3-x64.dll" "$(BIN_DIR)" >nul
+	@copy /Y "$(LIB_DIR)\libcrypto-3-x64.dll" "$(BIN_DIR)" >nul
 	@echo DLLs copied successfully.
+
+# Clean build files
+.PHONY: clean
+clean:
+	@echo Cleaning build files...
+	@if exist "$(OBJ_DIR)\*" del /Q "$(OBJ_DIR)\*"
+	@if exist "$(BIN_DIR)\*" del /Q "$(BIN_DIR)\*"
+	@echo Clean complete.
+
+# Run the program
+.PHONY: run
+run: $(TARGET)
+	@echo Running PhantomID...
+	@$(TARGET)
