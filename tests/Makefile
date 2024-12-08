@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -I../../runtime/tree -pthread
+CFLAGS = -Wall -Wextra -I../../../runtime/tree -pthread
 LDFLAGS = -pthread
 
 SRCS = test_tree.c ../../runtime/tree/tree.c
