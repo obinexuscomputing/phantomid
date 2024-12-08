@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <pthread.h>
+
 #include "../tree/tree.h"
 #include "../network/network.h"
 #include "../state/state.h"

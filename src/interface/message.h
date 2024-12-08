@@ -2,6 +2,7 @@
 #define MESSAGE_INTERFACE_H
 
 #include <time.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "program.h"
