@@ -158,6 +158,10 @@
   },
   "active": "57cef067498bca50",
   "lastOpenFiles": [
+    "src/interface/state.h",
+    "src/interface/message.h",
+    "src/interface/command.h",
+    "src/interface/program.h",
     "src/runtime/cli/cli.c",
     "src/runtime/cli/cli.h",
     "src/runtime/state/state.c",
@@ -165,10 +169,6 @@
     "src/runtime/network/network.c",
     "tests/unit/test_tree.c",
     "tests/unit",
-    "tests/Makefile",
-    "src/unit/test_tree.c",
-    "src/unit/Makefile",
-    "src/unit",
     "README.md",
     "Untitled.canvas",
     "PhantomID.md"
