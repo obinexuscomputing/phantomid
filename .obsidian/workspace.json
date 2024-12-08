@@ -158,6 +158,9 @@
   },
   "active": "57cef067498bca50",
   "lastOpenFiles": [
+    "src/programs/phantomid.h",
+    "src/programs/phantomid.c",
+    "src/programs/handlers.c",
     "src/programs/state.c",
     "src/interface/program.c",
     "src/interface/state.c",
@@ -166,9 +169,6 @@
     "src/interface/message.h",
     "src/interface/command.h",
     "src/interface/program.h",
-    "src/runtime/cli/cli.c",
-    "src/runtime/cli/cli.h",
-    "src/runtime/state/state.c",
     "README.md",
     "Untitled.canvas",
     "PhantomID.md"
