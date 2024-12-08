@@ -149,47 +149,54 @@ CommandResult cli_execute_network(CLIContext* ctx, int argc, char** argv) {
     return CMD_ERROR_INVALID;
 }
 
-// Process state commands
-CommandResult cli_execute_state(CLIContext* ctx, int argc, char** argv) {
+
+// Process node commands
+CommandResult cli_execute_node(CLIContext* ctx, int argc, char** argv) {
     if (argc < 2) {
-        set_error(ctx, "Missing state command. Usage: state <save|load|info>");
+        set_error(ctx, "Missing node command. Usage: node <create|delete|list> [args]");
         return CMD_ERROR_ARGS;
     }
 
-    if (strcmp(argv[1], "save") == 0) {
-        if (state_save(ctx->state, ctx->tree)) {
-            printf("State saved successfully\n");
+    if (strcmp(argv[1], "create") == 0) {
+        const char* parent_id = argc > 2 ? argv[2] : NULL;
+        TreeNode* node = tree_create_node(ctx->tree, parent_id);
+        
+        if (node) {
+            printf("Created node: %s\n", node->id);
+            if (parent_id) {
+                printf("Parent: %s\n", parent_id);
+            }
             return CMD_SUCCESS;
         }
         
-        set_error(ctx, "Failed to save state");
-        return CMD_ERROR_STATE;
+        set_error(ctx, "Failed to create node");
+        return CMD_ERROR_EXEC;
     }
     
-    else if (strcmp(argv[1], "load") == 0) {
-        if (state_load(ctx->state, ctx->tree)) {
-            printf("State loaded successfully\n");
+    else if (strcmp(argv[1], "delete") == 0) {
+        if (argc < 3) {
+            set_error(ctx, "Missing node ID. Usage: node delete <id>");
+            return CMD_ERROR_ARGS;
+        }
+        
+        if (tree_delete_node(ctx->tree, argv[2])) {
+            printf("Deleted node: %s\n", argv[2]);
             return CMD_SUCCESS;
         }
         
-        set_error(ctx, "Failed to load state");
-        return CMD_ERROR_STATE;
+        set_error(ctx, "Failed to delete node");
+        return CMD_ERROR_EXEC;
     }
     
-    else if (strcmp(argv[1], "info") == 0) {
-        printf("\nState Information:\n");
-        printf("Version: %u\n", state_get_version(ctx->state));
-        printf("Nodes: %zu\n", state_get_node_count(ctx->state));
-        printf("Last Save: %s", ctime(&ctx->state->header.timestamp));
-        printf("Checksum Valid: %s\n", 
-               state_verify_checksum(ctx->state) ? "Yes" : "No");
+    else if (strcmp(argv[1], "list") == 0) {
+        printf("\nNode List:\n");
+        tree_traverse_dfs(ctx->tree, print_node, NULL);
         return CMD_SUCCESS;
     }
 
-    set_error(ctx, "Unknown state command: %s", argv[1]);
+    set_error(ctx, "Unknown node command: %s", argv[1]);
     return CMD_ERROR_INVALID;
 }
-
 // Process commands
 CommandResult cli_process_command(CLIContext* ctx, const char* command) {
     if (!ctx || !command) return CMD_ERROR_INVALID;
@@ -276,9 +283,12 @@ void cli_print_help(void) {
 }
 
 
+// Print node information
 static void print_node(void* node, void* data) {
     TreeNode* n = (TreeNode*)node;
+    (void)data; // Silence unused parameter warning
     printf("Node ID: %s\n", n->id);
+    // Add any other information you want to print about the node
 }
 
 void cli_print_version(void) {
