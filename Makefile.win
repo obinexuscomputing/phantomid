@@ -1,0 +1,162 @@
+# Windows compiler and tools
+CC := gcc
+AR := ar
+RM := del /Q
+MKDIR := mkdir
+CP := copy /Y
+
+# Project directories
+ROOT_DIR := .
+SRC_DIR := $(ROOT_DIR)/src
+BIN_DIR := $(ROOT_DIR)/bin
+OBJ_DIR := $(ROOT_DIR)/build/obj
+LIB_DIR := $(ROOT_DIR)/build/lib
+DOC_DIR := $(ROOT_DIR)/docs
+TEST_DIR := $(ROOT_DIR)/tests
+
+# Source directories
+INTERFACE_DIR := $(SRC_DIR)/interface
+RUNTIME_DIR := $(SRC_DIR)/runtime
+PROGRAM_DIR := $(SRC_DIR)/programs
+
+# OpenSSL configuration for Windows
+OPENSSL_DIR := C:\Program Files\OpenSSL-Win64
+OPENSSL_INCLUDE := -I"$(OPENSSL_DIR)/include"
+OPENSSL_LIBS := -L"$(OPENSSL_DIR)/lib" -lssl -lcrypto
+
+# Windows-specific defines and libraries
+WINDOWS_DEFINES := -D_WIN32 -DWIN32_LEAN_AND_MEAN -D__USE_MINGW_ANSI_STDIO=1
+WINDOWS_LIBS := -lws2_32 -ladvapi32 -lcrypt32 -luser32 -lgdi32 -lmsvcrt
+
+# Compiler flags
+CFLAGS := -Wall -Wextra -O2 -g $(OPENSSL_INCLUDE) $(WINDOWS_DEFINES)
+CFLAGS += -I$(SRC_DIR)
+CFLAGS += -D_POSIX_C_SOURCE=200809L
+
+# Linker flags
+LDFLAGS := -pthread -static-libgcc -static-libstdc++
+LIBS := $(OPENSSL_LIBS) $(WINDOWS_LIBS)
+
+# Source files by component
+INTERFACE_SRCS := $(wildcard $(INTERFACE_DIR)/*.c)
+RUNTIME_SRCS := $(wildcard $(RUNTIME_DIR)/*/*.c)
+PROGRAM_SRCS := $(wildcard $(PROGRAM_DIR)/*.c)
+
+# Object files
+INTERFACE_OBJS := $(INTERFACE_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+RUNTIME_OBJS := $(RUNTIME_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+PROGRAM_OBJS := $(PROGRAM_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+# All object files
+OBJS := $(INTERFACE_OBJS) $(RUNTIME_OBJS) $(PROGRAM_OBJS)
+
+# Main target
+TARGET := $(BIN_DIR)/phantomid.exe
+
+# Test files
+TEST_SRCS := $(wildcard $(TEST_DIR)/unit/*.c) $(wildcard $(TEST_DIR)/integration/*.c)
+TEST_OBJS := $(TEST_SRCS:%.c=$(OBJ_DIR)/%.o)
+TEST_BINS := $(TEST_SRCS:%.c=$(BIN_DIR)/%.exe)
+
+# Create build directories
+.PHONY: create_dirs
+create_dirs:
+	@if not exist "$(BIN_DIR)" $(MKDIR) "$(BIN_DIR)"
+	@if not exist "$(OBJ_DIR)\interface" $(MKDIR) "$(OBJ_DIR)\interface"
+	@if not exist "$(OBJ_DIR)\runtime\cli" $(MKDIR) "$(OBJ_DIR)\runtime\cli"
+	@if not exist "$(OBJ_DIR)\runtime\network" $(MKDIR) "$(OBJ_DIR)\runtime\network"
+	@if not exist "$(OBJ_DIR)\runtime\state" $(MKDIR) "$(OBJ_DIR)\runtime\state"
+	@if not exist "$(OBJ_DIR)\runtime\tree" $(MKDIR) "$(OBJ_DIR)\runtime\tree"
+	@if not exist "$(OBJ_DIR)\programs" $(MKDIR) "$(OBJ_DIR)\programs"
+	@if not exist "$(OBJ_DIR)\tests\unit" $(MKDIR) "$(OBJ_DIR)\tests\unit"
+	@if not exist "$(OBJ_DIR)\tests\integration" $(MKDIR) "$(OBJ_DIR)\tests\integration"
+
+# Default target
+.PHONY: all
+all: check_env create_dirs $(TARGET) copy_dlls
+
+# Environment check target
+.PHONY: check_env
+check_env:
+	@echo Checking build environment...
+	@where gcc >nul 2>&1 || (echo GCC not found in PATH && exit 1)
+	@if not exist "$(OPENSSL_DIR)\include\openssl\ssl.h" (echo OpenSSL headers not found && exit 1)
+	@echo Environment check passed.
+
+# Link the final binary
+$(TARGET): $(OBJS)
+	@echo Linking $@...
+	@$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	@echo Build complete.
+
+# Compile interface sources
+$(OBJ_DIR)/interface/%.o: $(INTERFACE_DIR)/%.c
+	@echo Compiling $<...
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile runtime sources
+$(OBJ_DIR)/runtime/%.o: $(RUNTIME_DIR)/%.c
+	@echo Compiling $<...
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile program sources
+$(OBJ_DIR)/programs/%.o: $(PROGRAM_DIR)/%.c
+	@echo Compiling $<...
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+# Build tests
+.PHONY: tests
+tests: $(TEST_BINS)
+
+$(BIN_DIR)/%.exe: $(OBJ_DIR)/%.o $(OBJS)
+	@echo Building test $@...
+	@$(CC) $< $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+
+$(OBJ_DIR)/tests/%.o: $(TEST_DIR)/%.c
+	@echo Compiling test $<...
+	@$(CC) $(CFLAGS) -I$(TEST_DIR) -c $< -o $@
+
+# Copy OpenSSL DLLs
+.PHONY: copy_dlls
+copy_dlls:
+	@echo Copying DLLs...
+	@$(CP) "$(OPENSSL_DIR)\bin\libssl-*.dll" "$(BIN_DIR)" >nul 2>&1
+	@$(CP) "$(OPENSSL_DIR)\bin\libcrypto-*.dll" "$(BIN_DIR)" >nul 2>&1
+
+# Run tests
+.PHONY: check
+check: tests
+	@echo Running tests...
+	@for %%t in ($(TEST_BINS)) do (%%t || exit 1)
+
+# Clean build files
+.PHONY: clean
+clean:
+	@echo Cleaning build files...
+	@if exist "$(OBJ_DIR)" $(RM) /S /Q "$(OBJ_DIR)\*"
+	@if exist "$(BIN_DIR)" $(RM) /S /Q "$(BIN_DIR)\*"
+	@echo Clean complete.
+
+# Debug build
+.PHONY: debug
+debug: CFLAGS += -DDEBUG -g3 -O0
+debug: all
+
+# Release build
+.PHONY: release
+release: CFLAGS += -DNDEBUG -O3
+release: all
+
+# Print help
+.PHONY: help
+help:
+	@echo PhantomID Build System for Windows
+	@echo -------------------------------
+	@echo Available targets:
+	@echo   all        - Build the project (default)
+	@echo   clean      - Remove build files
+	@echo   tests      - Build test programs
+	@echo   check      - Build and run tests
+	@echo   debug      - Build with debug symbols
+	@echo   release    - Build optimized release
+	@echo   help       - Show this help message
