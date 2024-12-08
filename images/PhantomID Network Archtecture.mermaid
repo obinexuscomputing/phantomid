@@ -1,0 +1,45 @@
+graph TD
+    subgraph Program Interface Layer
+        PI[PhantomID Network Interface] --> |Node Operations| NODE[Node Interface]
+        PI --> |Network Messages| NET[Network Interface]
+        PI --> |Graph State| GRAPH[Graph Interface]
+    end
+
+    subgraph Runtime Layer
+        NODE --> |Identity Management| ID[Identity Runtime]
+        NODE --> |Node Cleanup| ORPHAN[Orphan Handler]
+        
+        NET --> |Connection Management| CONN[Connection Runtime]
+        NET --> |Message Routing| ROUTE[Routing Runtime]
+        
+        GRAPH --> |Graph Operations| TREE[Graph Runtime]
+        GRAPH --> |State Management| PERSIST[Persistence Runtime]
+    end
+
+    subgraph Core Features
+        ID --> |Node Creation/Deletion| Identity[Identity Manager]
+        ORPHAN --> |Node Reassignment| Cleanup[Orphan Cleanup]
+        
+        CONN --> |P2P Connections| Network[Network Manager]
+        ROUTE --> |Message Delivery| Router[Message Router]
+        
+        TREE --> |Graph Structure| Graph[Graph Manager]
+        PERSIST --> |Graph Storage| Storage[State Storage]
+    end
+
+    subgraph Implementation Functions
+        Identity --> |"create_node()"|CreateNode
+        Identity --> |"delete_node()"|DeleteNode
+        
+        Cleanup --> |"reassign_children()"|Reassign
+        Cleanup --> |"cleanup_orphans()"|CleanOrphans
+        
+        Network --> |"handle_connection()"|Connect
+        Network --> |"handle_disconnection()"|Disconnect
+        
+        Router --> |"route_message()"|Route
+        Router --> |"broadcast_message()"|Broadcast
+        
+        Graph --> |"update_graph()"|UpdateGraph
+        Graph --> |"check_integrity()"|CheckIntegrity
+    end
