@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "message.h"
-
 // Internal message queue management
 typedef struct MessageQueue {
     Message* messages;

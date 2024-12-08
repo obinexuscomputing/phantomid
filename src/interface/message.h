@@ -1,6 +1,7 @@
 #ifndef MESSAGE_INTERFACE_H
 #define MESSAGE_INTERFACE_H
 
+#include <time.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "program.h"
