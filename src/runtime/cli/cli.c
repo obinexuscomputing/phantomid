@@ -275,6 +275,12 @@ void cli_print_help(void) {
     printf("  exit                       Exit program\n");
 }
 
+
+static void print_node(void* node, void* data) {
+    TreeNode* n = (TreeNode*)node;
+    printf("Node ID: %s\n", n->id);
+}
+
 void cli_print_version(void) {
     printf("PhantomID version %s\n", VERSION);
 }
